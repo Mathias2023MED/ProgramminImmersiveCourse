@@ -608,7 +608,7 @@ GameObject:
   m_Component:
   - component: {fileID: 548620171}
   m_Layer: 0
-  m_Name: LeftHand (1)
+  m_Name: RightHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -901,7 +901,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: bb68f1b00655898468fc6f225bdba47a, type: 3}
       propertyPath: m_Name
-      value: LeftHand
+      value: RightHand
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: bb68f1b00655898468fc6f225bdba47a, type: 3}
       propertyPath: m_Controller
@@ -953,7 +953,7 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: -4289430672226363583, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    m_Reference: {fileID: 7904272356298805229, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   grabAction:
     m_UseReference: 1
     m_Action:
@@ -965,7 +965,7 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: 6558622148059887818, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+    m_Reference: {fileID: -1758520528963094988, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   myAnimator: {fileID: 1775475030}
 --- !u!1 &1824454676
 GameObject:

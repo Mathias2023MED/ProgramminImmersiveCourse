@@ -12,9 +12,9 @@ public class animationController : MonoBehaviour
     void Update()
     {
         float grabValue = grabAction.action.ReadValue<float>();
-        myAnimator.SetFloat("Grip", grabValue);
+        myAnimator.SetFloat("grab", grabValue);
 
         float triggerValue = triggerAction.action.ReadValue<float>();
-        myAnimator.SetFloat("Trigger", triggerValue);
+        myAnimator.SetFloat("trigger", triggerValue);
     }
 }
