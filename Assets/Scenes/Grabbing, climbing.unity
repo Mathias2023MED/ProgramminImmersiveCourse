@@ -4473,6 +4473,12 @@ MonoBehaviour:
       m_Calls: []
   m_FirstSelectEntered:
     m_PersistentCalls:
+      m_Calls: []
+  m_LastSelectExited:
+    m_PersistentCalls:
+      m_Calls: []
+  m_SelectEntered:
+    m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1707414473}
         m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
@@ -4486,12 +4492,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  m_LastSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
   m_SelectExited:
     m_PersistentCalls:
       m_Calls: []
@@ -4611,8 +4611,10 @@ MonoBehaviour:
   minImpactSpeed: 2
   armDelayAfterRelease: 0.05
   popParticles: {fileID: 1967811466}
+  explosionPrefab: {fileID: 0}
   popAudio: {fileID: 1687967852}
-  cleanupDelay: 2
+  destroyOnExplode: 1
+  destroyDelay: 0.1
 --- !u!114 &1707414472
 MonoBehaviour:
   m_ObjectHideFlags: 0

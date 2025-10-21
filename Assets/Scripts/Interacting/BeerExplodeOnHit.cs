@@ -4,106 +4,127 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class BeerExplodeOnHit : MonoBehaviour
 {
-    [Header("Explode when hitting these layers (e.g., Poster)")]
+    [Header("Valid hit layers (e.g., Poster, or Poster + Dartboard)")]
     public LayerMask explodeLayers;
 
-    [Header("Impact gating")]
-    public float minImpactSpeed = 2.0f;      // m/s required to explode
-    public float armDelayAfterRelease = 0.05f;// small delay after release
+    [Header("Arming & impact")]
+    public float minImpactSpeed = 2.0f;
+    public float armDelayAfterRelease = 0.08f;
 
-    [Header("Effects (optional)")]
-    public ParticleSystem popParticles;      // assign a simple burst
-    public AudioSource popAudio;             // optional sound
-    public float cleanupDelay = 2f;          // optional delayed cleanup/respawn
+    [Header("Fire effect (existing object in scene)")]
+    public GameObject fireObject;         // drag disabled "Fire" from Hierarchy
+    public float fireSurfaceOffset = 0.02f;
+
+    [Header("Audio (optional)")]
+    public AudioClip popClip;             // assign a clip if you want a one-shot
+    public float popVolume = 1f;
+
+    [Header("XR Grab (optional)")]
+    public UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grab;       // auto-found if left empty
+    public Transform beerGrabPoint;       // drag your BeerGrabPoint if you have one
+
+    public bool HasExploded { get; private set; }
 
     Rigidbody rb;
-    UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grab;
     bool isHeld;
     bool armed;
     float armAtTime;
 
-    void Awake()
+    void Reset()
     {
         rb = GetComponent<Rigidbody>();
         grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+    }
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        if (!grab) grab = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
 
         if (grab)
         {
-            grab.selectEntered.AddListener(_ => { isHeld = true; armed = false; });
+            if (beerGrabPoint) grab.attachTransform = beerGrabPoint;
+
+            grab.selectEntered.AddListener(_ =>
+            {
+                isHeld = true;
+                armed = false;
+            });
+
             grab.selectExited.AddListener(_ =>
             {
                 isHeld = false;
                 armAtTime = Time.time + armDelayAfterRelease;
             });
         }
+
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
     }
 
     void Update()
     {
-        // Arm once we've been released and the small delay has passed
         if (!isHeld && !armed && Time.time >= armAtTime)
             armed = true;
     }
 
     void OnCollisionEnter(Collision col)
     {
-        if (!armed) return;
+        if (!armed || HasExploded) return;
         if ((explodeLayers.value & (1 << col.gameObject.layer)) == 0) return;
 
-        // Use relative speed for robustness
-        float speed = col.relativeVelocity.magnitude;
-        if (speed < minImpactSpeed) return;
+        if (col.relativeVelocity.magnitude < minImpactSpeed) return;
 
         Explode(col);
     }
 
     void Explode(Collision col)
     {
+        HasExploded = true;
         armed = false;
 
-        // Force release if still somehow selected
+        // Play one-shot audio that survives even if we disable the beer
+        if (popClip)
+            AudioSource.PlayClipAtPoint(popClip, transform.position, popVolume);
+
+        // Place + start FIRE
+        if (fireObject)
+        {
+            var cp = col.GetContact(0);
+            Vector3 pos = cp.point + cp.normal * fireSurfaceOffset;
+            Quaternion rot = Quaternion.LookRotation(cp.normal, Vector3.up);
+
+            fireObject.transform.SetPositionAndRotation(pos, rot);
+
+            if (!fireObject.activeSelf)
+                fireObject.SetActive(true);
+
+            // Force the animation to start from frame 0 even if it was played before
+            var anim = fireObject.GetComponent<Animator>();
+            if (anim)
+            {
+                anim.Rebind();
+                anim.Update(0f);
+                anim.Play(0, -1, 0f); // default layer, from start
+            }
+        }
+
+        // Safety: release if still selected
         if (grab && grab.isSelected)
             foreach (var interactor in grab.interactorsSelecting)
                 grab.interactionManager?.SelectExit(interactor, grab);
 
-        // Play FX
-        if (popParticles)
-        {
-            var cp = col.GetContact(0);
-            popParticles.transform.SetPositionAndRotation(cp.point, Quaternion.LookRotation(cp.normal));
-            popParticles.Play();
-        }
-        if (popAudio) popAudio.Play();
-
-        // Hide visuals + stop further collisions
+        // STOP rendering & collisions (don�t destroy)
         foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = false;
         foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = false;
 
-        // Freeze physics
         rb.isKinematic = true;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
-        // (Optional) disable grabbing now that it's "broken"
         if (grab) grab.enabled = false;
 
-        if (cleanupDelay > 0f)
-            Invoke(nameof(AfterExplodeCleanup), cleanupDelay);
-    }
-
-    void AfterExplodeCleanup()
-    {
-        // Choose one: destroy, pool, or reset visuals.
-        // Destroy(gameObject);
-
-        // Example: reset to be ready again (if you�re not destroying)
-        foreach (var r in GetComponentsInChildren<Renderer>(true)) r.enabled = true;
-        foreach (var c in GetComponentsInChildren<Collider>(true)) c.enabled = true;
-        if (grab) grab.enabled = true;
-        rb.isKinematic = false;
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        armed = false; isHeld = false;
-        // You can also reposition the beer to a rack/spawn point here.
-        gameObject.SetActive(true);
+        // If you want the whole object gone from the hierarchy, uncomment:
+        // gameObject.SetActive(false);
     }
 }
